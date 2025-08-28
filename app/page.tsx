@@ -18,7 +18,7 @@ export default function Home() {
     if (!file) return;
 
     Papa.parse(file, {
-      header: true, // espera columna "phones"
+      header: true,
       complete: (results) => {
         const numbers = results.data
           .map((row: any) => row.phones)
@@ -57,7 +57,6 @@ export default function Home() {
     alert("Campaña iniciada!");
   };
 
-  // Polling cada 5s
   useEffect(() => {
     const interval = setInterval(async () => {
       try {

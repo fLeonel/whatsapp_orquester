@@ -6,22 +6,28 @@ let currentCampaign: Campaign | null = null;
 export function startCampaign(
   phones: string[],
   params: CampaignParams,
-  instanceId: string,
+  instances: string[],
 ) {
   currentCampaign = {
     id: Date.now().toString(),
     phones,
     params,
     sent: 0,
-    status: "running",
-    instanceId,
+    status: "Running",
+    instances,
   };
+
   runCampaign();
 }
 
 async function runCampaign() {
   if (!currentCampaign) return;
-  const { phones, params, instanceId } = currentCampaign;
+  const { phones, params, instances } = currentCampaign;
+
+  if (!instances || instances.length === 0) {
+    console.error("No se recibieron instancias. Campaña cancelada.");
+    return;
+  }
 
   let index = 0;
   try {
@@ -29,7 +35,9 @@ async function runCampaign() {
       const batch = phones.slice(index, index + params.batchSize);
 
       for (const phone of batch) {
-        await sendMessage(instanceId, phone, params.message);
+        for (const instance of instances) {
+          await sendMessage(instance, phone, params.message);
+        }
         currentCampaign.sent++;
       }
 

@@ -28,7 +28,7 @@ export async function sendMessage(
     });
 
     if (!res.ok) {
-      throw new Error(`❌ Error en API WhatsApp: ${res.status}`);
+      throw new Error(`Error en API WhatsApp: ${res.status}`);
     }
 
     const data = await res.json();

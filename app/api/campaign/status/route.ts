@@ -6,7 +6,7 @@ export async function GET() {
   const status: Campaign | null = getCampaignStatus();
 
   if (!status) {
-    return NextResponse.json({ status: "idle" });
+    return NextResponse.json({ status: "Waiting" });
   }
 
   return NextResponse.json(status);

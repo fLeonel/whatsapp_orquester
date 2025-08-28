@@ -10,6 +10,6 @@ export type Campaign = {
   phones: string[];
   params: CampaignParams;
   sent: number;
-  status: "idle" | "running" | "finished";
-  instanceId?: string;
+  status: "Waiting" | "Running" | "finished";
+  instanceId?: string[];
 };
