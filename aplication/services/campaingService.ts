@@ -1,4 +1,4 @@
-import { Campaign, CampaignParams } from "@/domain/campaign";
+import { Campaign, CampaignParams } from "@/domain/campain";
 import { sendMessage } from "@/infrastructure/whatsappClient";
 
 let currentCampaign: Campaign | null = null;
@@ -19,23 +19,26 @@ async function runCampaign() {
   const { phones, params } = currentCampaign;
 
   let index = 0;
-  while (index < phones.length && currentCampaign.sent < params.dailyLimit) {
-    const batch = phones.slice(index, index + params.batchSize);
+  try {
+    while (index < phones.length && currentCampaign.sent < params.dailyLimit) {
+      const batch = phones.slice(index, index + params.batchSize);
 
-    for (let phone of batch) {
-      // Aqui tenemos que configurar la API
-      await sendMessage("instancia1", phone, params.message);
-      currentCampaign.sent++;
+      for (const phone of batch) {
+        await sendMessage("instancia1", phone, params.message);
+        currentCampaign.sent++;
+      }
+
+      index += params.batchSize;
+      await new Promise((r) => setTimeout(r, params.cooldownMs));
     }
 
-    index += params.batchSize;
-
-    await new Promise((r) => setTimeout(r, params.cooldownMs));
+    currentCampaign.status = "finished";
+  } catch (err) {
+    console.error("Error en campaña:", err);
+    currentCampaign.status = "finished";
   }
-
-  currentCampaign.status = "finished";
 }
 
-export function getCampaignStatus() {
+export function getCampaignStatus(): Campaign | null {
   return currentCampaign;
 }

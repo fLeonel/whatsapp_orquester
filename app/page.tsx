@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Papa from "papaparse";
+import type { Campaign } from "@/domain/campain";
 
 export default function Home() {
   const [batchSize, setBatchSize] = useState(15);
@@ -9,6 +10,7 @@ export default function Home() {
   const [dailyLimit, setDailyLimit] = useState(200);
   const [message, setMessage] = useState("");
   const [phones, setPhones] = useState<string[]>([]);
+  const [status, setStatus] = useState<Campaign | null>(null);
 
   const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -18,7 +20,7 @@ export default function Home() {
       header: true, // espera columna "phone"
       complete: (results) => {
         const numbers = results.data
-          .map((row: any) => row.phone)
+          .map((row: any) => row.phones)
           .filter(Boolean);
         setPhones(numbers);
         console.log("✅ Números cargados:", numbers);
@@ -46,8 +48,25 @@ export default function Home() {
       }),
     });
 
-    alert("🚀 Campaña iniciada!");
+    alert("Campaña iniciada!");
   };
+
+  // Polling cada 5s
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch("/api/campaign/status");
+        if (res.ok) {
+          const data = (await res.json()) as Campaign;
+          setStatus(data);
+        }
+      } catch (err) {
+        console.error("Error en polling:", err);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -128,7 +147,15 @@ export default function Home() {
         {/* Polling */}
         {status && (
           <div className="mt-6 p-4 bg-gray-50 border rounded-md">
-            <h2>Estado de Campaña</h2>
+            <h2 className="text-lg font-semibold text-gray-700 mb-2">
+              Estado de campaña
+            </h2>
+            <p>
+              <strong>Status:</strong> {status.status}
+            </p>
+            <p>
+              <strong>Enviados:</strong> {status.sent} / {status.phones?.length}
+            </p>
           </div>
         )}
       </div>
