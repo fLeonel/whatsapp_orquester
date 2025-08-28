@@ -11,5 +11,5 @@ export type Campaign = {
   params: CampaignParams;
   sent: number;
   status: "Waiting" | "Running" | "finished";
-  instanceId?: string[];
+  instances: string[];
 };

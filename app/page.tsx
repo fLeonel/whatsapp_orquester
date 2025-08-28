@@ -17,12 +17,16 @@ export default function Home() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    Papa.parse(file, {
+    type CsvRow = {
+      phones: string;
+    };
+
+    Papa.parse<CsvRow>(file, {
       header: true,
       complete: (results) => {
         const numbers = results.data
-          .map((row: any) => row.phones)
-          .filter(Boolean);
+          .map((row) => row.phones)
+          .filter((num): num is string => Boolean(num));
         setPhones(numbers);
         console.log("✅ Números cargados:", numbers);
       },
