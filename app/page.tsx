@@ -11,13 +11,14 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [phones, setPhones] = useState<string[]>([]);
   const [status, setStatus] = useState<Campaign | null>(null);
+  const [selectedInstances, setSelectedInstances] = useState<string[]>([]);
 
   const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     Papa.parse(file, {
-      header: true, // espera columna "phone"
+      header: true, // espera columna "phones"
       complete: (results) => {
         const numbers = results.data
           .map((row: any) => row.phones)
@@ -33,6 +34,10 @@ export default function Home() {
       alert("Primero carga un CSV con números.");
       return;
     }
+    if (selectedInstances.length === 0) {
+      alert("Selecciona al menos una instancia.");
+      return;
+    }
 
     await fetch("/api/campaign", {
       method: "POST",
@@ -45,6 +50,7 @@ export default function Home() {
           dailyLimit,
           message,
         },
+        instances: selectedInstances,
       }),
     });
 
@@ -55,7 +61,7 @@ export default function Home() {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("/api/campaign/status");
+        const res = await fetch("/api/campaign");
         if (res.ok) {
           const data = (await res.json()) as Campaign;
           setStatus(data);
@@ -91,6 +97,45 @@ export default function Home() {
               ✅ {phones.length} números cargados
             </p>
           )}
+        </div>
+
+        {/* Selección de instancias */}
+        <div className="mb-4">
+          <label className="block text-gray-700">Instancias:</label>
+          <div className="flex flex-col gap-2">
+            <label>
+              <input
+                type="checkbox"
+                value="instancia1"
+                checked={selectedInstances.includes("instancia1")}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedInstances((prev) =>
+                    prev.includes(value)
+                      ? prev.filter((v) => v !== value)
+                      : [...prev, value],
+                  );
+                }}
+              />
+              <span className="ml-2">Instancia 1</span>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                value="instancia2"
+                checked={selectedInstances.includes("instancia2")}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedInstances((prev) =>
+                    prev.includes(value)
+                      ? prev.filter((v) => v !== value)
+                      : [...prev, value],
+                  );
+                }}
+              />
+              <span className="ml-2">Instancia 2</span>
+            </label>
+          </div>
         </div>
 
         {/* Parámetros */}

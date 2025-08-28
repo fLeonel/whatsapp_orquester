@@ -3,20 +3,25 @@ import { sendMessage } from "@/infrastructure/whatsappClient";
 
 let currentCampaign: Campaign | null = null;
 
-export function startCampaign(phones: string[], params: CampaignParams) {
+export function startCampaign(
+  phones: string[],
+  params: CampaignParams,
+  instanceId: string,
+) {
   currentCampaign = {
     id: Date.now().toString(),
     phones,
     params,
     sent: 0,
     status: "running",
+    instanceId,
   };
   runCampaign();
 }
 
 async function runCampaign() {
   if (!currentCampaign) return;
-  const { phones, params } = currentCampaign;
+  const { phones, params, instanceId } = currentCampaign;
 
   let index = 0;
   try {
@@ -24,7 +29,7 @@ async function runCampaign() {
       const batch = phones.slice(index, index + params.batchSize);
 
       for (const phone of batch) {
-        await sendMessage("instancia1", phone, params.message);
+        await sendMessage(instanceId, phone, params.message);
         currentCampaign.sent++;
       }
 

@@ -1,5 +1,9 @@
 const BASE_URL = "http://18.206.157.252:3001";
-const INSTANCE_KEY = "45344290";
+
+const INSTANCES: Record<string, string> = {
+  instancia1: "45344290",
+  instancia2: "46476454",
+};
 
 export async function sendMessage(
   instanceId: string,
@@ -7,7 +11,10 @@ export async function sendMessage(
   message: string,
 ) {
   try {
-    const url = `${BASE_URL}/message/text?key=${INSTANCE_KEY}`;
+    const key = INSTANCES[instanceId];
+    if (!key) throw new Error(`No existe instancia con id: ${instanceId}`);
+
+    const url = `${BASE_URL}/message/text?key=${key}`;
 
     const res = await fetch(url, {
       method: "POST",

@@ -11,4 +11,5 @@ export type Campaign = {
   params: CampaignParams;
   sent: number;
   status: "idle" | "running" | "finished";
+  instanceId?: string;
 };
