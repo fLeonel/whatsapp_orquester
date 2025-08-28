@@ -3,6 +3,9 @@ const BASE_URL = "http://18.206.157.252:3001";
 const INSTANCES: Record<string, string> = {
   instancia1: "45344290",
   instancia2: "46476454",
+  instancia3: "59763179",
+  instancia4: "59763180",
+  instancia5: "59763191",
 };
 
 export async function sendMessage(

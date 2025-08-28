@@ -138,6 +138,54 @@ export default function Home() {
               />
               <span className="ml-2">Instancia 2</span>
             </label>
+            <label>
+              <input
+                type="checkbox"
+                value="instancia3"
+                checked={selectedInstances.includes("instancia3")}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedInstances((prev) =>
+                    prev.includes(value)
+                      ? prev.filter((v) => v !== value)
+                      : [...prev, value],
+                  );
+                }}
+              />
+              <span className="ml-2">Instancia 3</span>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                value="instancia4"
+                checked={selectedInstances.includes("instancia4")}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedInstances((prev) =>
+                    prev.includes(value)
+                      ? prev.filter((v) => v !== value)
+                      : [...prev, value],
+                  );
+                }}
+              />
+              <span className="ml-2">Instancia 4</span>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                value="instancia5"
+                checked={selectedInstances.includes("instancia5")}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedInstances((prev) =>
+                    prev.includes(value)
+                      ? prev.filter((v) => v !== value)
+                      : [...prev, value],
+                  );
+                }}
+              />
+              <span className="ml-2">Instancia 5</span>
+            </label>
           </div>
         </div>
 
