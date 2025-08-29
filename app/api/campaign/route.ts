@@ -2,20 +2,21 @@ import { NextResponse } from "next/server";
 import {
   startCampaign,
   getCampaignStatus,
-} from "@/aplication/services/campaingService";
-import { CampaignParams } from "@/domain/campain";
+  stopCampaign,
+} from "@/application/services/campaignService";
+import { CampaignParams, Contact } from "@/domain/campaign";
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { phones, params, instances } = body as {
-    phones: string[];
+  const { contacts, params, instances } = body as {
+    contacts: Contact[];
     params: CampaignParams;
     instances: string[];
   };
 
-  if (!phones || phones.length === 0) {
+  if (!contacts || contacts.length === 0) {
     return NextResponse.json(
-      { error: "No se enviaron teléfonos" },
+      { error: "No se enviaron contactos" },
       { status: 400 },
     );
   }
@@ -27,12 +28,25 @@ export async function POST(req: Request) {
     );
   }
 
-  startCampaign(phones, params, instances);
+  const campaign = startCampaign(contacts, params, instances);
 
-  return NextResponse.json({ ok: true, message: "Campaña iniciada..." });
+  return NextResponse.json({
+    ok: true,
+    message: "Campaña iniciada...",
+    campaignId: campaign.id,
+    instances: campaign.instances.map((i) => ({
+      id: i.id,
+      total: i.queue.length,
+    })),
+  });
 }
 
 export async function GET() {
   const status = getCampaignStatus();
   return NextResponse.json(status ?? { error: "No hay campaña activa" });
+}
+
+export async function DELETE() {
+  stopCampaign();
+  return NextResponse.json({ ok: true, message: "Campaña detenida." });
 }

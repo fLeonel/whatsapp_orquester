@@ -5,7 +5,17 @@ const INSTANCES: Record<string, string> = {
   instancia2: "46476454",
   instancia3: "59763179",
   instancia4: "59763180",
-  instancia5: "59763191",
+  instancia5: "59520788",
+  instancia6: "59449864",
+  instancia7: "59763191",
+  instancia8: "59449865",
+  instancia9: "59578962",
+  instancia10: "59578980",
+  instancia11: "59596603",
+  instancia12: "59596603",
+  instancia13: "59596618",
+  instancia14: "59596616",
+  instancia15: "59596587",
 };
 
 export async function sendMessage(

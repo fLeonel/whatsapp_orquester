@@ -2,40 +2,52 @@
 
 import { useState, useEffect } from "react";
 import Papa from "papaparse";
-import type { Campaign } from "@/domain/campain";
+import type { Campaign, Contact } from "@/domain/campaign";
 
-export default function Home() {
-  const [batchSize, setBatchSize] = useState(15);
-  const [cooldown, setCooldown] = useState(60);
+export default function HomePage() {
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [dailyLimit, setDailyLimit] = useState(200);
-  const [message, setMessage] = useState("");
-  const [phones, setPhones] = useState<string[]>([]);
-  const [status, setStatus] = useState<Campaign | null>(null);
+  const [messagesPerCycle, setMessagesPerCycle] = useState(20);
+  const [cooldown, setCooldown] = useState(5); // segundos
+  const [rest, setRest] = useState(15); // minutos
   const [selectedInstances, setSelectedInstances] = useState<string[]>([]);
+  const [status, setStatus] = useState<Campaign | null>(null);
 
+  // 👉 Generar dinámicamente 15 instancias
+  const AVAILABLE_INSTANCES = Array.from(
+    { length: 15 },
+    (_, i) => `instancia${i + 1}`,
+  );
+
+  // 📂 Cargar CSV (Celular, Mensaje)
   const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    type CsvRow = {
-      phones: string;
-    };
+    type CsvRow = { Celular?: string; Mensaje?: string };
 
     Papa.parse<CsvRow>(file, {
       header: true,
+      skipEmptyLines: true,
+      delimiter: ";", // importante para CSVs de Excel en español
+      transformHeader: (h) => h.trim(),
       complete: (results) => {
-        const numbers = results.data
-          .map((row) => row.phones)
-          .filter((num): num is string => Boolean(num));
-        setPhones(numbers);
-        console.log("✅ Números cargados:", numbers);
+        const parsed: Contact[] = results.data
+          .map((row) => ({
+            phone: row.Celular?.toString().trim() || "",
+            message: row.Mensaje?.toString().trim() || "",
+          }))
+          .filter((c) => c.phone && c.message);
+
+        setContacts(parsed);
       },
     });
   };
 
+  // 🚀 Iniciar campaña
   const startCampaign = async () => {
-    if (phones.length === 0) {
-      alert("Primero carga un CSV con números.");
+    if (contacts.length === 0) {
+      alert("Primero carga un CSV con contactos.");
       return;
     }
     if (selectedInstances.length === 0) {
@@ -47,20 +59,21 @@ export default function Home() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        phones,
+        contacts,
         params: {
-          batchSize,
-          cooldownMs: cooldown * 1000,
           dailyLimit,
-          message,
+          messagesPerCycle,
+          cooldownBetweenMessagesMs: cooldown * 1000,
+          restAfterCycleMs: rest * 60 * 1000,
         },
         instances: selectedInstances,
       }),
     });
 
-    alert("Campaña iniciada!");
+    alert("🚀 Campaña iniciada!");
   };
 
+  // 🔄 Polling del estado
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -79,134 +92,61 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-3xl">
         <h1 className="text-2xl font-bold mb-6 text-center text-green-600">
           WhatsApp Orquestador
         </h1>
 
-        {/* Cargar CSV */}
-        <div className="mb-4">
+        {/* CSV */}
+        <div className="mb-6">
           <label className="block mb-2 font-medium text-gray-700">
-            Cargar CSV:
+            Cargar CSV (Celular, Mensaje):
           </label>
           <input
             type="file"
             accept=".csv"
             onChange={handleCSVUpload}
-            className="w-full cursor-pointer border border-dashed border-gray-400 p-3 rounded-md bg-gray-50 hover:bg-green-50 hover:border-green-400 transition"
+            className="w-full cursor-pointer border border-dashed border-gray-400 p-3 rounded-md bg-gray-50 hover:bg-green-50"
           />
-          {phones.length > 0 && (
+          {contacts.length > 0 && (
             <p className="mt-2 text-sm text-green-600">
-              ✅ {phones.length} números cargados
+              ✅ {contacts.length} contactos cargados
             </p>
           )}
         </div>
 
-        {/* Selección de instancias */}
-        <div className="mb-4">
-          <label className="block text-gray-700">Instancias:</label>
-          <div className="flex flex-col gap-2">
-            <label>
-              <input
-                type="checkbox"
-                value="instancia1"
-                checked={selectedInstances.includes("instancia1")}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSelectedInstances((prev) =>
-                    prev.includes(value)
-                      ? prev.filter((v) => v !== value)
-                      : [...prev, value],
-                  );
-                }}
-              />
-              <span className="ml-2">Instancia 1</span>
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                value="instancia2"
-                checked={selectedInstances.includes("instancia2")}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSelectedInstances((prev) =>
-                    prev.includes(value)
-                      ? prev.filter((v) => v !== value)
-                      : [...prev, value],
-                  );
-                }}
-              />
-              <span className="ml-2">Instancia 2</span>
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                value="instancia3"
-                checked={selectedInstances.includes("instancia3")}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSelectedInstances((prev) =>
-                    prev.includes(value)
-                      ? prev.filter((v) => v !== value)
-                      : [...prev, value],
-                  );
-                }}
-              />
-              <span className="ml-2">Instancia 3</span>
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                value="instancia4"
-                checked={selectedInstances.includes("instancia4")}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSelectedInstances((prev) =>
-                    prev.includes(value)
-                      ? prev.filter((v) => v !== value)
-                      : [...prev, value],
-                  );
-                }}
-              />
-              <span className="ml-2">Instancia 4</span>
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                value="instancia5"
-                checked={selectedInstances.includes("instancia5")}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSelectedInstances((prev) =>
-                    prev.includes(value)
-                      ? prev.filter((v) => v !== value)
-                      : [...prev, value],
-                  );
-                }}
-              />
-              <span className="ml-2">Instancia 5</span>
-            </label>
-          </div>
-        </div>
-
         {/* Parámetros */}
-        <div className="space-y-3 mb-4">
+        <div className="grid grid-cols-2 gap-4 mb-6">
           <div>
-            <label className="block text-gray-700">Batch Size:</label>
+            <label className="block text-gray-700">Mensajes por ciclo:</label>
             <input
               type="number"
-              value={batchSize}
-              onChange={(e) => setBatchSize(+e.target.value)}
+              value={messagesPerCycle}
+              onChange={(e) => setMessagesPerCycle(+e.target.value)}
               className="w-full border border-gray-300 rounded-md p-2"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700">Cooldown (segundos):</label>
+            <label className="block text-gray-700">
+              Cooldown entre mensajes (segundos):
+            </label>
             <input
               type="number"
               value={cooldown}
               onChange={(e) => setCooldown(+e.target.value)}
+              className="w-full border border-gray-300 rounded-md p-2"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700">
+              Descanso por ciclo (minutos):
+            </label>
+            <input
+              type="number"
+              value={rest}
+              onChange={(e) => setRest(+e.target.value)}
               className="w-full border border-gray-300 rounded-md p-2"
             />
           </div>
@@ -222,14 +162,52 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Mensaje */}
+        {/* Instancias */}
         <div className="mb-6">
-          <label className="block text-gray-700">Mensaje:</label>
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            className="w-full border border-gray-300 rounded-md p-2 h-24 resize-none"
-          />
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-gray-700 font-medium">
+              Instancias:
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedInstances.length === AVAILABLE_INSTANCES.length) {
+                  // Si ya están todas seleccionadas → deseleccionar todas
+                  setSelectedInstances([]);
+                } else {
+                  // Si no → seleccionar todas
+                  setSelectedInstances([...AVAILABLE_INSTANCES]);
+                }
+              }}
+              className="text-sm px-3 py-1 rounded border border-green-600 text-green-600 hover:bg-green-50"
+            >
+              {selectedInstances.length === AVAILABLE_INSTANCES.length
+                ? "Deseleccionar todas"
+                : "Seleccionar todas"}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            {AVAILABLE_INSTANCES.map((id) => (
+              <div
+                key={id}
+                onClick={() =>
+                  setSelectedInstances((prev) =>
+                    prev.includes(id)
+                      ? prev.filter((v) => v !== id)
+                      : [...prev, id],
+                  )
+                }
+                className={`cursor-pointer border rounded p-3 text-center ${
+                  selectedInstances.includes(id)
+                    ? "bg-green-600 text-white border-green-700"
+                    : "bg-gray-50 hover:bg-green-100"
+                }`}
+              >
+                {id}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Botón */}
@@ -237,10 +215,10 @@ export default function Home() {
           onClick={startCampaign}
           className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition"
         >
-          Iniciar Campaña
+          🚀 Iniciar Campaña
         </button>
 
-        {/* Polling */}
+        {/* Estado */}
         {status && (
           <div className="mt-6 p-4 bg-gray-50 border rounded-md">
             <h2 className="text-lg font-semibold text-gray-700 mb-2">
@@ -249,9 +227,24 @@ export default function Home() {
             <p>
               <strong>Status:</strong> {status.status}
             </p>
-            <p>
-              <strong>Enviados:</strong> {status.sent} / {status.phones?.length}
-            </p>
+
+            {"contacts" in status && (
+              <>
+                <p>
+                  <strong>Contactos:</strong> {status.contacts.length}
+                </p>
+
+                <h3 className="mt-4 font-medium">Instancias:</h3>
+                <ul className="list-disc ml-6">
+                  {status.instances.map((inst) => (
+                    <li key={inst.id}>
+                      {inst.id} → {inst.sent}/{inst.queue.length} ({inst.status}
+                      )
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
         )}
       </div>
